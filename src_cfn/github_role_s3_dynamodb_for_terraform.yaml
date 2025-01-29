@@ -1,0 +1,188 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Setup resources for GitHub Action and Terraform.
+#----------------------------------------------
+Parameters:
+  #------------------
+  GitHubOrganizationsName:
+    Type: String
+    Default: "NoppyOrg"
+  GitHubRepositoryName:
+    Type: String
+    Default: "TerraformPipelineSample"
+  BranchName:
+    Type: String
+    AllowedValues:
+      - "development"
+      - "stage"
+      - "production"
+  OidcProvider:
+    Type: String
+    Default: "null"
+  GitHubRoleTerraformDeployRoleName:
+    Type: String
+    Default: "GitHubAction-Deploy-Role"
+  GitHubRoleTerraformCheckRoleName:
+    Type: String
+    Default: "GitHubAction-Check-Role"
+#----------------------------------------------
+Resources:
+  #-- IAM Role
+  GitHubRoleTerraformDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref GitHubRoleTerraformDeployRoleName
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated:
+                - !Ref OidcProvider
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: "sts.amazonaws.com"
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  [
+                    !Sub "repo:${GitHubOrganizationsName}/${GitHubRepositoryName}:ref:refs/heads/${BranchName}",
+                  ]
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  #---
+  GitHubRoleTerraformCheckRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref GitHubRoleTerraformCheckRoleName
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRoleWithWebIdentity
+            Principal:
+              Federated:
+                - !Ref OidcProvider
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: "sts.amazonaws.com"
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  [
+                    !Sub "repo:${GitHubOrganizationsName}/${GitHubRepositoryName}:*",
+                  ]
+      Policies:
+        - PolicyName: AllowToAccessTerraformBackend
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt TerraformBackendBucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${TerraformBackendBucket}/${GitHubRepositoryName}/*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                Resource: !GetAtt TerraformLockStateTable.Arn
+              - Effect: Allow
+                Action:
+                  - kms:Encrypt
+                  - kms:Decrypt
+                Resource: !GetAtt KeyForTerraform.Arn
+
+  #--- KMS Customer Key(CMK) for Terraform
+  KeyForTerraform:
+    Type: AWS::KMS::Key
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      EnableKeyRotation: true
+      PendingWindowInDays: 30
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+          - Sid: Allow DynamoDB
+            Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+            Resource: "*"
+            Condition:
+              StringEquals:
+                kms:CallerAccount: !Ref AWS::AccountId
+                kms:ViaService: !Sub dynamodb.${AWS::Region}.amazonaws.com
+  AliasForTerraformKey:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: "alias/Key-For-Terraform"
+      TargetKeyId: !Ref KeyForTerraform
+  #--- a S3 bucket and a DynamoDB Table for Managed-core Terraform
+  TerraformBackendBucket:
+    #checkov:skip=CKV_AWS_18:必要な場合は別途手動で設定する
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt KeyForTerraform.Arn
+            BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: Cleaning-Rule
+            Status: Enabled
+            Prefix: "/"
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+              NewerNoncurrentVersions: 3
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+            ExpiredObjectDeleteMarker: true
+  #--- DynamoDB Table for Terraform lock
+  TerraformLockStateTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: terraform-lock-state
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEType: KMS
+        SSEEnabled: true
+        KMSMasterKeyId: !GetAtt KeyForTerraform.Arn
+Outputs:
+  TerraformBackendSeBucketName:
+    Value: !Ref TerraformBackendBucket
+  GitHubRoleTerraformDeployRoleName:
+    Value: !Ref GitHubRoleTerraformDeployRole
+  GitHubRoleTerraformCheckRoleName:
+    Value: !Ref GitHubRoleTerraformCheckRole
+  TerraformLockStateTableName:
+    Value: !Ref TerraformLockStateTable
