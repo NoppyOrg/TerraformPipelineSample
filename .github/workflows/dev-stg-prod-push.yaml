@@ -13,6 +13,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: ${{github.ref_name}}
     defaults:
       run:
         shell: bash
@@ -33,7 +34,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ vars.TERRAFORM_CHECK_ROLE }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.TERRAFORM_CHECK_ROLE }}
           role-session-name: mainworkflow
           aws-region: ap-northeast-1
       - name: Check identity
