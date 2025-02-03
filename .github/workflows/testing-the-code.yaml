@@ -19,13 +19,13 @@ jobs:
     steps:
       - name: Set environment variables
         run: |
-          SPECIFIED_ENV=${{ ( github.ref_name == 'main' || github.ref_name == 'production' ) && github.ref_name || 'development' }}
+          SPECIFIED_ENV=${{ ( github.ref_name == 'staging' || github.ref_name == 'production' ) && github.ref_name || 'development' }}
           echo "ref_name=${{ github.ref_name }}"
           echo "SPECIFIED_ENV=${SPECIFIED_ENV}"
           echo "SPECIFIED_ENV=${SPECIFIED_ENV}" >> "$GITHUB_OUTPUT"
       - name: Set terraform workspace
         run: |
-          TERRAFORM_WORK_DIR=${{env.TERRAFORM_WORK_DIR_BASE}}${{steps.set_env.outputs.SPECIFIED_ENV}}
+          TERRAFORM_WORK_DIR=${{env.TERRAFORM_WORK_DIR_BASE}}${{needs.set_env.outputs.SPECIFIED_ENV}}
           echo "TERRAFORM_WORK_DIR=${TERRAFORM_WORK_DIR}"
           echo "TERRAFORM_WORK_DIR=${TERRAFORM_WORK_DIR}" >> "$GITHUB_ENV"
   test:
