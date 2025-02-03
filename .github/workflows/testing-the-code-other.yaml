@@ -11,7 +11,7 @@ on:
 env:
   TERRAFORM_WORK_DIR_BASE: sample_project/envs/development
   TERRAFORM_VERSION: 1.9.1
-  TERRAFORM_CHECK_ROLE: GitHubAction-Check-Role
+  TERRAFORM_ROLE: GitHubAction-Check-Role
   PYTHON_VERSION: 3.12
   AWS_REGION: ap-northeast-1
 jobs:
@@ -33,7 +33,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_DEPLOY_ROLE}}
+          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_ROLE}}
           role-session-name: github-actions
           aws-region: ${{env.AWS_REGION}}
       - name: Set up Python
