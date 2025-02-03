@@ -14,48 +14,58 @@ env:
   TERRAFORM_CHECK_ROLE: GitHubAction-Check-Role
   AWS_REGION: ap-northeast-1
 jobs:
-  test:
+  set_env:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    defaults:
-      run:
-        shell: bash
-    environment:
-      name: ${{ ( github.ref_name == 'refs/heads/staging' || github.ref_name == 'refs/heads/production' ) && github.ref_name || 'refs/heads/development' }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_DEPLOY_ROLE}}
-          role-session-name: github-actions
-          aws-region: ${{env.AWS_REGION}}
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Test with Checkov
-        id: checkov
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: .
-          framework: terraform
-          quiet: true
-          skip_check: LOW
-      - name: Setup terraform
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: ${{env.TERRAFORM_VERSION}}
-      - name: Terraform Format
-        run: terraform fmt -recursive -check=true
-      - name: Terraform Init
-        run: terraform -chdir=${TERRAFORM_WORK_DIR} init
-      - name: Terraform Validate
-        run: terraform -chdir=${TERRAFORM_WORK_DIR} validate -no-color
-      - name: Terraform Plan
-        run: terraform -chdir=${TERRAFORM_WORK_DIR} plan
+      - name: Set environment variables
+        run: |
+          SPECIFIED_ENV=${{ ( github.ref_name == 'refs/heads/staging' || github.ref_name == 'refs/heads/production' ) && github.ref_name || 'refs/heads/development' }}
+          echo "ref_name=${{ github.ref_name }}"
+          echo "SPECIFIED_ENV=${SPECIFIED_ENV}"
+          echo "${SPECIFIED_ENV}" >> $GITHUB_OUTPUT
+
+  # test:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   environment:
+  #     name: ${{ ( github.ref_name == 'refs/heads/staging' || github.ref_name == 'refs/heads/production' ) && github.ref_name || 'refs/heads/development' }}
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_DEPLOY_ROLE}}
+  #         role-session-name: github-actions
+  #         aws-region: ${{env.AWS_REGION}}
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.12
+  #     - name: Test with Checkov
+  #       id: checkov
+  #       uses: bridgecrewio/checkov-action@master
+  #       with:
+  #         directory: .
+  #         framework: terraform
+  #         quiet: true
+  #         skip_check: LOW
+  #     - name: Setup terraform
+  #       uses: hashicorp/setup-terraform@v1
+  #       with:
+  #         terraform_version: ${{env.TERRAFORM_VERSION}}
+  #     - name: Terraform Format
+  #       run: terraform fmt -recursive -check=true
+  #     - name: Terraform Init
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} init
+  #     - name: Terraform Validate
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} validate -no-color
+  #     - name: Terraform Plan
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} plan
