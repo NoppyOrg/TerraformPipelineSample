@@ -6,7 +6,7 @@ on:
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR: env/${{ github.ref_name }}/
+  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
   TERRAFORM_VERSION: 1.9.1
   TERRAFORM_DEPLOY_ROLE: GitHubAction-Deploy-Role
   AWS_REGION: ap-northeast-1

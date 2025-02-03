@@ -6,9 +6,9 @@ on:
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR: env/${{ github.ref_name }}/
+  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
   TERRAFORM_VERSION: 1.9.1
-  TERRAFORM_CHECK_ROLE: "GitHubAction-Check-Role"
+  TERRAFORM_CHECK_ROLE: GitHubAction-Check-Role
   AWS_REGION: ap-northeast-1
 jobs:
   test:
