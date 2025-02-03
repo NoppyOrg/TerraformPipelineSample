@@ -19,10 +19,10 @@ jobs:
     steps:
       - name: Set environment variables
         run: |
-          SPECIFIED_ENV=${{ ( github.ref_name == 'refs/heads/staging' || github.ref_name == 'refs/heads/production' ) && github.ref_name || 'refs/heads/development' }}
+          SPECIFIED_ENV=${{ ( github.ref_name == 'staging' || github.ref_name == 'production' ) && github.ref_name || 'development' }}
           echo "ref_name=${{ github.ref_name }}"
           echo "SPECIFIED_ENV=${SPECIFIED_ENV}"
-          echo "${SPECIFIED_ENV}" >> $GITHUB_OUTPUT
+          echo "${SPECIFIED_ENV}" >> "$GITHUB_OUTPUT"
 
   # test:
   #   runs-on: ubuntu-latest
