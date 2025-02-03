@@ -8,8 +8,7 @@ resource "aws_eip" "natgw1" {
   #checkov:skip=CKV2_AWS_19:This EIP is used for NAT Gateway.
   count = var.create_igw && var.create_nagtw ? 1 : 0
 
-  domain                    = "vpc"
-  associate_with_private_ip = true
+  domain = "vpc"
   tags = {
     Name = "${var.vpcname}-natgw-${data.aws_availability_zone.AZs[var.az_id[0]].name_suffix}"
   }
@@ -19,8 +18,7 @@ resource "aws_eip" "natgw2" {
   #checkov:skip=CKV2_AWS_19:This EIP is used for NAT Gateway.
   count = var.create_igw && var.create_nagtw ? 1 : 0
 
-  domain                    = "vpc"
-  associate_with_private_ip = true
+  domain = "vpc"
   tags = {
     Name = "${var.vpcname}-natgw-${data.aws_availability_zone.AZs[var.az_id[1]].name_suffix}"
   }
@@ -30,8 +28,7 @@ resource "aws_eip" "natgw3" {
   #checkov:skip=CKV2_AWS_19:This EIP is used for NAT Gateway.
   count = var.create_igw && var.create_nagtw && var.availability_zone == "3az" ? 1 : 0
 
-  domain                    = "vpc"
-  associate_with_private_ip = true
+  domain = "vpc"
   tags = {
     Name = "${var.vpcname}-natgw-${data.aws_availability_zone.AZs[var.az_id[2]].name_suffix}"
   }
