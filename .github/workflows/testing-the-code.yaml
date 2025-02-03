@@ -22,10 +22,9 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment: ${{ ( github.ref_name == 'development' || github.ref_name == 'staging' || github.ref_name == 'production' ) && github.ref_name || 'development' }}
+    environment:
+      name: ${{ ( github.ref_name == 'refs/heads/staging' || github.ref_name == 'refs/heads/production' ) && github.ref_name || 'refs/heads/development' }}
     steps:
-      - name: environment
-        run: echo ${{ github.ref_name }}
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
