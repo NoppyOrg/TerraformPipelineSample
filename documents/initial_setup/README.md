@@ -153,11 +153,6 @@ aws --profile ${PROFILE[$branch]} cloudformation update-termination-protection \
 ```
 
 ## GitHub 設定
-
-### リポジトリのEnvironmentに     secretsでAWS_ACCOUNT＿IDを設定
-
-
-
 #### (GUI操作)GitHubリポジトリに各環境のenvironmentを準備する
 <作成する環境>
 - 作成するEnvironment一覧
@@ -187,34 +182,6 @@ do
 done
 ```
 
-
-
-
-
-```shell
-#CloudFormationスタック出力からのIAMロール名取得
-AWS_IAM_ROLE_NAME_DEPLOY_ROLE=$( \
-  aws --profile ${PROFILE} --output text \
-    cloudformation describe-stacks \
-        --stack-name setup-github-and-terraform \
-        --query 'Stacks[].Outputs[?OutputKey==`GitHubRoleTerraformDeployRoleName`].[OutputValue]');
-
-AWS_IAM_ROLE_NAME_CHECK_ROLE=$( \
-  aws --profile ${PROFILE} --output text \
-    cloudformation describe-stacks \
-        --stack-name setup-github-and-terraform \
-        --query 'Stacks[].Outputs[?OutputKey==`GitHubRoleTerraformCheckRoleName`].[OutputValue]')
-
-echo "AWS_IAM_ROLE_NAME_DEPLOY_ROLE = ${AWS_IAM_ROLE_NAME_DEPLOY_ROLE}"
-echo "AWS_IAM_ROLE_NAME_CHECK_ROLE  = ${AWS_IAM_ROLE_NAME_CHECK_ROLE}"
-
-
-# GitHubのTunnel リポジトリへの指定
-gh variable set AWS_ACCOUNT_ID --body ${ACCOUNT_ID}
-gh variable set AWS_IAM_ROLE_NAME_DEPLOY_ROLE --body ${AWS_IAM_ROLE_NAME_DEPLOY_ROLE}
-gh variable set AWS_IAM_ROLE_NAME_CHECK_ROLE  --body ${AWS_IAM_ROLE_NAME_CHECK_ROLE}
-```
-
 ## Terraform 修正
 
 ### バックエンド設定の変更内容の説明
@@ -222,13 +189,17 @@ gh variable set AWS_IAM_ROLE_NAME_CHECK_ROLE  --body ${AWS_IAM_ROLE_NAME_CHECK_R
 Terraform のバックエンドで利用する S3 バケットを、CloudFormation で作成したリソースに設定します。
 具体的な設定ファイルは以下となります。
 
-- 対象ファイル: `env/development/backend.tf`
+- 対象ファイル: 
+  - development環境: `sample_project/envs/development/backend.tf`
+  - stage環境: `sample_project/envs/stage/backend.tf`
+  - production環境: `sample_project/envs/production/backend.tf`
 
+環境に応じて以下の通り守成します。
 ```hcl
 terraform {
   backend "s3" {
     bucket = "CloudFormationスタックの`TerraformBackendSeBucketName`の値を設定"
-    key    = "tunnel-vpc/development/terraform.tfstate"
+    key    = "sample_project/terraform.tfstate"
     region = "ap-northeast-1"
 
     dynamodb_table = "terraform-lock-state"
@@ -296,7 +267,7 @@ git add .
 git commit -m 'modify backend'
 ```
 
-## GitHub Actions での Terraform による環境のデプロイ
+## GitHub Actions での Terraform による環境のデプロイテスト
 
 ```shell
 git branch
