@@ -1,18 +1,21 @@
-name: Deploy resources to development/staging/production environments
+name: Testing the code(other branches)
 on:
+  pull_request:
+    branches-ignore:
+      - staging
+      - production
   push:
-    branches:
-      - development
+    branches-ignore:
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
+  TERRAFORM_WORK_DIR: sample_project/envs/development
   TERRAFORM_VERSION: 1.9.1
-  TERRAFORM_ROLE: GitHubAction-Deploy-Role
+  TERRAFORM_ROLE: GitHubAction-Check-Role
   PYTHON_VERSION: 3.12
   AWS_REGION: ap-northeast-1
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -20,7 +23,8 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment: ${{github.ref_name}}
+    environment:
+      name: development
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -56,5 +60,3 @@ jobs:
         run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} validate -no-color
       - name: Terraform Plan
         run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} plan
-      - name: Terraform Apply
-        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} apply -auto-approve

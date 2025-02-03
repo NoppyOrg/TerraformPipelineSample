@@ -9,6 +9,9 @@ Parameters:
   GitHubRepositoryName:
     Type: String
     Default: "TerraformPipelineSample"
+  ProjectName:
+    Type: String
+    Default: "sample_project"
   BranchName:
     Type: String
     AllowedValues:
@@ -80,7 +83,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
-                Resource: !Sub "arn:aws:s3:::${TerraformBackendBucket}/${GitHubRepositoryName}/*"
+                Resource: !Sub "arn:aws:s3:::${TerraformBackendBucket}/${ProjectName}/*"
               - Effect: Allow
                 Action:
                   - dynamodb:DescribeTable
@@ -93,7 +96,8 @@ Resources:
                   - kms:Encrypt
                   - kms:Decrypt
                 Resource: !GetAtt KeyForTerraform.Arn
-
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
   #--- KMS Customer Key(CMK) for Terraform
   KeyForTerraform:
     Type: AWS::KMS::Key
