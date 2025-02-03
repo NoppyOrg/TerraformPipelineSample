@@ -22,7 +22,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment: ${{ github.ref_name == [development, staging, production] && github.ref_name || 'development' }}
+    environment: ${{ ( github.ref_name == 'development' || github.ref_name == 'staging' || github.ref_name == 'production' ) && github.ref_name || 'development' }}
     steps:
       - name: environment
         run: echo ${{ github.ref_name }}
