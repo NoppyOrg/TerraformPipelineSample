@@ -44,7 +44,7 @@ Resources:
               StringLike:
                 token.actions.githubusercontent.com:sub:
                   [
-                    !Sub "repo:${GitHubOrganizationsName}/${GitHubRepositoryName}:ref:refs/heads/${BranchName}",
+                    !Sub "repo:${GitHubOrganizationsName}/${GitHubRepositoryName}:environment:${BranchName}",
                   ]
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
