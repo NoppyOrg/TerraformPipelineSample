@@ -97,8 +97,8 @@ Resources:
   #--- KMS Customer Key(CMK) for Terraform
   KeyForTerraform:
     Type: AWS::KMS::Key
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete #本番運用の場合はRetainを指定する
+    UpdateReplacePolicy: Delete #本番運用の場合はRetainを指定する
     Properties:
       EnableKeyRotation: true
       PendingWindowInDays: 30
@@ -132,8 +132,8 @@ Resources:
   TerraformBackendBucket:
     #checkov:skip=CKV_AWS_18:必要な場合は別途手動で設定する
     Type: AWS::S3::Bucket
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete #本番運用の場合はRetainを指定する
+    UpdateReplacePolicy: Delete #本番運用の場合はRetainを指定する
     Properties:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
@@ -162,8 +162,8 @@ Resources:
   #--- DynamoDB Table for Terraform lock
   TerraformLockStateTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Delete
-    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete #本番運用の場合はRetainを指定する
+    UpdateReplacePolicy: Delete #本番運用の場合はRetainを指定する
     Properties:
       TableName: terraform-lock-state
       AttributeDefinitions:

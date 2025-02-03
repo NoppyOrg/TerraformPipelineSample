@@ -18,6 +18,7 @@ GitHub Actions による CI 環境は大きく以下の流れでセットアッ�
 セットアップの前提として以下が完了していることを確認します。
 
 1. AWS アカウントの初期セットアップが完了していること
+1. 作業環境がMacOSであること(zshシェル利用前提の手順のため)
 1. AWS CLI が利用可能な作業環境であること
    1. AWS CLI のインストールは[こちらを参照](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
    1. 設定方法は[こちらを参照](https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/getting-started-quickstart.html)
@@ -47,51 +48,76 @@ GitHub Actions にて該当 AWS 環境にアクセス可能にするため、OID
 
 ### 事前準備
 
-(MacOS の場合のみ)zsh でコメントアウトを有効にする
+zsh でコメントアウトを有効にします。
 
 ```shell
 setopt interactivecomments
 ```
 
-共通で利用する環境変数の設定
-
+### ３環境のブランチ名とAWS CLIプロファイル名の設定
+ブランチ名を連想配列のkeyにして、各環境のAWS CLIのプロファイル名を手動設定します。
 ```shell
-PROFILE=default
+typeset -A PROFILE=()
+PROFILE[development]="<dev環境のAWS CLIプロファイル>"
+PROFILE[stage]="<stage環境のAWS CLIプロファイル>"
+PROFILE[production]="<production環境のAWS CLIプロファイル>"
 ```
 
-AWS CLI の実行確認
-
+AWSアカウントIDの設定を行います。
 ```shell
-aws --profile ${PROFILE} sts get-caller-identity
-```
-
-環境変数の自動設定
-
-```shell
-ACCOUNT_ID=$(aws --profile ${PROFILE} --output text \
+typeset -A ACCOUNT_ID=()
+for branch in ${(k)PROFILE}
+do
+	ACCOUNT_ID[$branch]=$(aws --profile ${PROFILE[$branch]} --output text \
     sts get-caller-identity --query 'Account')
-echo "<<<<<Check>>>>>"
-echo "ACCOUNT_ID=${ACCOUNT_ID}"
+done
 ```
 
-### OIDC プロバイダーの作成
+ブランチ名、AWS CLIプロファイル、該当環境のAWSアカウントIDが認識通りかを確認します。
+```shell
+echo "<<<<<Check values>>>>>>"
+for branch in ${(k)PROFILE}
+do
+	printf 'branch = %-15s profile = %-15s account id = %-12s\n' ${branch} ${PROFILE[$branch]} ${ACCOUNT_ID[$branch]}
+done
+```
+
+### OIDCプロバイダーとGitHubかのフェデレーション用IAMロール及びterraform用のS3バケット&DynamoDB作成
+以下の(1)-(3)の、OIDCプロバイダ作成とCloudFormationによるリソース作成は、３環境それぞれ実行します。
+
+#### (1)環境設定
+環境ごとにブランチ名を設定します。
+- 開発環境の場合
+```shell
+branch=development
+```
+- ステージング環境の場合
+```shell
+branch=stage
+```
+- 本番環境の場合
+```shell
+branch=production
+```
+
+#### (2)OIDC プロバイダーの作成
 
 AWS CLI で OIDC プロバイダーを作成します。(CloudFormation では、ThumbprintList が自動生成されないため CLI を利用)
 
 ```shell
-aws --profile ${PROFILE} \
+aws --profile ${PROFILE[$branch]} \
     iam create-open-id-connect-provider \
         --url "https://token.actions.githubusercontent.com" \
         --client-id-list "sts.amazonaws.com";
-OIDC_PROVIDER_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
+OIDC_PROVIDER_ARN="arn:aws:iam::${ACCOUNT_ID[$branch]}:oidc-provider/token.actions.githubusercontent.com"
 
 # OIDCプロバイダーの確認
-aws --profile ${PROFILE} \
+aws --profile ${PROFILE[$branch]} \
     iam get-open-id-connect-provider \
         --open-id-connect-provider-arn "${OIDC_PROVIDER_ARN}"
 ```
 
-### IAM ロール/KMS/S3 バケット/Dynamodb の作成
+#### (3)IAM ロール/KMS/S3 バケット/Dynamodb の作成
 
 CloudFormation を利用し、GitHub Actions からの AWS アクセスおよび Terraform に必要なリソースをデプロイします。
 
@@ -101,48 +127,69 @@ CloudFormation を利用し、GitHub Actions からの AWS アクセスおよび
 - スタック名: `github-action-and-terraform-resources`
 - パラメータ:
   - `GitHubOrganizationsName` : 本リポジトリの所有者を設定。所有者が組織の場合は GitHub Organization 名を指定。所有者が個別アカウントの場合は、アカウン名を設定する。
+  - `GitHubRepositoryName` : リポジトリ名。このサンプルではこのリポジトリの名前(`TerraformPipelineSample`)をデフォルトで設定している。
+  - `BranchName` : 該当環境用のGitHub Action実行時のブランチ名。このテンプレートでは、`development`, `stage`, `production`から選択できるようにしている。環境に合わせて適時テンプレートを変更すること。
   - `OidcProvider`: 作成した OIDC プロバイダーの ARN の指定
 
-CloudFormation のデプロイ
+<注意事項>
+- CloudFormationテンプレートは、利用環境に応じて修正してください。
+- テンプレートの削除やアップデート時にリソースを削除するか残すかを指定する`DeletionPolicy`と`UpdateReplacePolicy`は、このテンプレートでは学習や検証用に一時的にデプロイして利用することを想定して`Delete`指定にしています。本番運用の場合は`Retain`を指定するようテンプレートの見直しをお願いします。
 
+<CloudFormation のデプロイ>
+CloudFormationのテンプレートをデプロイします。
 ```shell
-aws --profile ${PROFILE} cloudformation deploy \
+aws --profile ${PROFILE[$branch]} cloudformation deploy \
     --stack-name "github-action-and-terraform-resources" \
-    --template-file "./initial_setup/setup_github_action.cf.yaml" \
-    --parameter-overrides OidcProvider="${OIDC_PROVIDER_ARN}" \
+    --template-file "./src_cfn/github_role_s3_dynamodb_for_terraform.yaml" \
+    --parameter-overrides OidcProvider="${OIDC_PROVIDER_ARN}" BranchName="$branch" \
     --capabilities CAPABILITY_NAMED_IAM ;
+```
+
+デプロイしたスタックに削除保護設定を行います。
+```shell
+aws --profile ${PROFILE[$branch]} cloudformation update-termination-protection \
+    --stack-name "github-action-and-terraform-resources" \
+    --enable-termination-protection;
 ```
 
 ## GitHub 設定
 
-### Actions から AssumeRole する先のロール ARN 設定
+### リポジトリのEnvironmentに     secretsでAWS_ACCOUNT＿IDを設定
 
-`TunnelNetwork`リポジトリの variables にアカウント ID や実行用の IAM ロール名を設定します。
-変数は、以下の３つを設定します。
 
-- `AWS_ACCOUNT_ID`: 実行先アカウント ID
-- `AWS_IAM_ROLE_NAME_DEPLOY_ROLE`: デプロイ用 IAM ロール名
-- `AWS_IAM_ROLE_NAME_CHECK_ROLE`: チェック用 IAM ロール名
 
-<ブラウザでの設定手順>
+#### (GUI操作)GitHubリポジトリに各環境のenvironmentを準備する
+<作成する環境>
+- 作成するEnvironment一覧
+  - <code>development</code>
+  - <code>stage</code>
+  - <code>production</code>
 
-- (a)GitHub の`TunnelNetwork`リポジトリの`Settings`を開く
-- (b)右のメニューから`Secrets and variables`の`Actions`を選択する
-- (c)`variables`のタグをクリックして開く
-- (d) New repository variable`で以下の３つの変数を作成する
-  - AWs アカウント ID
-    - `Name`: `AWS_ACCOUNT_ID`
-    - `Value`: `<実行先のAWSアカウントの12桁のアカウントID>`
-  - Terraform 実行用 IAM ロール名(デプロイ用 IAM ロール)
-    - `Name`: `AWS_IAM_ROLE_NAME_DEPLOY_ROLE`
-    - `Value`: デプロイした CloudFormation の`setup-github-and-terraform`スタックの出力に出ている`GitHubRoleTerraformDeployRoleName`の値を設定
-  - Terraform 実行用 IAM ロール名(チェック用 IAM ロール)
-    - `Name`: `AWS_IAM_ROLE_NAME_CHECK_ROLE`
-    - `Value`: デプロイした CloudFormation の`setup-github-and-terraform`スタックの出力に出ている`GitHubRoleTerraformCheckRoleName`の値を設定
+<手順>
+1. ブラウザでGitHubの該当リポジトリに移動する
+1. リポジトリ上部の<code>Settings</code>タブを開く
+1. 右のペインから<code>Environments</code>を選択し
+1. <code>New environment</code>ボタンを押す
+1. <code>Name</code>に上記で示したそれぞれの環境名を入力して、<code>Configure environment</code>ボタンを実行して環境を作成する
 
-<GitHub CLI の操作>
+#### (CLI操作)GitHubリポジトリに各環境のenvironmentを準備する
 
-TunnelNetwork レポジトリのディレクトリで実施します。
+- GitHubへのログイン
+```sh
+gh auth login --git-protocol https --hostname github.com --web
+```
+
+- environmentごとにsecretsでAWS_ACCOUNT_IDを設定
+```sh
+for branch in ${(k)PROFILE}
+do
+  gh secret set AWS_ACCOUNT_ID --body ${ACCOUNT_ID[$branch]} --env ${branch}
+done
+```
+
+
+
+
 
 ```shell
 #CloudFormationスタック出力からのIAMロール名取得
@@ -162,7 +209,7 @@ echo "AWS_IAM_ROLE_NAME_DEPLOY_ROLE = ${AWS_IAM_ROLE_NAME_DEPLOY_ROLE}"
 echo "AWS_IAM_ROLE_NAME_CHECK_ROLE  = ${AWS_IAM_ROLE_NAME_CHECK_ROLE}"
 
 
-# GitHubのTunnel レポジトリへの指定
+# GitHubのTunnel リポジトリへの指定
 gh variable set AWS_ACCOUNT_ID --body ${ACCOUNT_ID}
 gh variable set AWS_IAM_ROLE_NAME_DEPLOY_ROLE --body ${AWS_IAM_ROLE_NAME_DEPLOY_ROLE}
 gh variable set AWS_IAM_ROLE_NAME_CHECK_ROLE  --body ${AWS_IAM_ROLE_NAME_CHECK_ROLE}

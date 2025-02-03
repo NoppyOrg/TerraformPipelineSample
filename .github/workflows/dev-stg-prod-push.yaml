@@ -1,0 +1,85 @@
+name: "Development branch push Actions(only merge by pullrequest)"
+on:
+  push:
+    branches:
+      - development
+      - staging
+      - production
+env:
+  TERRAFORM_WORK_DIR: env/${{ github.ref_name }}/
+  TERRAFORM_VERSION: 1.9.1
+  TERRAFORM_CHECK_ROLE: "GitHubAction-Check-Role"
+  TERRAFORM_DEPLOY_ROLE: "GitHubAction-Deploy-Role"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: test
+        run: |
+          echo "TERRAFORM_WORK_DIR = ${{env.TERRAFORM_WORK_DIR}}"
+          echo "TERRAFORM_VERSION = ${{env.TERRAFORM_VERSION}}"
+          echo "TERRAFORM_CHECK_ROLE = ${{env.TERRAFORM_CHECK_ROLE}}"
+          echo "TERRAFORM_DEPLOY_ROLE = ${{env.TERRAFORM_DEPLOY_ROLE}}"
+          echo "GITHUB_REPOSITORY = ${{github.repository}}"
+          echo "GITHUB_REF = ${{github.ref}}"
+          echo "GITHUB_REF_NAME = ${{github.ref_name}}"
+          echo "GITHUB_HEAD_REF = ${{github.head_ref}}"
+          echo "GITHUB_BASE_REF = ${{github.base_ref}}"
+          echo "GITHUB_EVENT_NAME = ${{github.event_name}}"
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ vars.TERRAFORM_CHECK_ROLE }}
+          role-session-name: mainworkflow
+          aws-region: ap-northeast-1
+      - name: Check identity
+        run: aws sts get-caller-identity
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Configure AWS Credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ vars.AWS_IAM_ROLE_NAME_DEPLOY_ROLE }}
+  #         role-session-name: mainworkflow
+  #         aws-region: ap-northeast-1
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.9
+  #     - name: Test with Checkov
+  #       id: checkov
+  #       uses: bridgecrewio/checkov-action@master
+  #       with:
+  #         directory: .
+  #         framework: terraform
+  #         quiet: true
+  #         skip_check: LOW
+  #     - name: Setup terraform
+  #       uses: hashicorp/setup-terraform@v1
+  #       with:
+  #         terraform_version: ${{env.TERRAFORM_VERSION}}
+  #     - name: Terraform Format
+  #       run: terraform fmt -recursive -check=true
+  #     - name: Terraform Init
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} init
+  #     - name: Terraform Validate
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} validate -no-color
+  #     - name: Terraform Plan
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} plan
+  #     - name: Terraform Apply
+  #       run: terraform -chdir=${TERRAFORM_WORK_DIR} apply -auto-approve
+  #
