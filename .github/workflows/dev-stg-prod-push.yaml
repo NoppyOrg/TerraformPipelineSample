@@ -33,6 +33,7 @@ jobs:
           echo "AWS_ACCOUNT_ID = ${{secrets.AWS_ACCOUNT_ID}}"
           ROLE_ARN="arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{ env.TERRAFORM_CHECK_ROLE }}"
           echo $ROLE_ARN
+          echo ${{vars.TEST_VAR}}
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
