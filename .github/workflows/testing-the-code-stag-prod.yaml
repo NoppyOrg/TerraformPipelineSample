@@ -2,14 +2,11 @@ name: Testing the code(staging and production)
 on:
   pull_request:
     branches:
-      - staging
-      - production
-  push:
-    branches:
+      - development
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
+  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.base_ref }}/ # This is the path to the Terraform configuration files
   TERRAFORM_VERSION: 1.9.1
   TERRAFORM_ROLE: GitHubAction-Check-Role
   PYTHON_VERSION: 3.12
@@ -23,7 +20,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment: ${{github.ref_name}}
+    environment: ${{github.base_ref}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
