@@ -1,5 +1,25 @@
 resource "aws_s3_bucket" "for-vpc-flow-logs" {
+  #checkov:skip=CKV2_AWS_62: event notifiers are not used in this project.
+  #checkov:skip=CKV_AWS_21: This is a test project.
+  #checkov:skip=CKV_AWS_18: This is a test project.
+  #checkov:skip=CKV_AWS_144; This is a test project.
+}
 
+resource "aws_s3_bucket_server_side_encryption_configuration" "for-vpc-flow-logs" {
+  bucket = aws_s3_bucket.for-vpc-flow-logs.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+
+}
+
+resource "aws_s3_bucket_public_access_block" "for-vpc-flow-logs" {
+  bucket = aws_s3_bucket.for-vpc-flow-logs.id
+
+  block_public_acls   = true
+  block_public_policy = true
 }
 
 
