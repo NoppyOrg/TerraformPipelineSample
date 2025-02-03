@@ -31,7 +31,7 @@ jobs:
           echo "GITHUB_BASE_REF = ${{github.base_ref}}"
           echo "GITHUB_EVENT_NAME = ${{github.event_name}}"
           echo "AWS_ACCOUNT_ID = ${{secrets.AWS_ACCOUNT_ID}}"
-          ROLE_ARN="arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ env.TERRAFORM_CHECK_ROLE }}"
+          ROLE_ARN="arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{ env.TERRAFORM_CHECK_ROLE }}"
           echo $ROLE_ARN
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
