@@ -1,4 +1,4 @@
-name: Dev-Stg-Prod-Push-Test-And-Deploy-Resources
+name: Deploy resources to development, staging, and production environments
 on:
   push:
     branches:
