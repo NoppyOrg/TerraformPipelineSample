@@ -25,7 +25,7 @@ jobs:
           echo "SPECIFIED_ENV=${SPECIFIED_ENV}" >> "$GITHUB_OUTPUT"
       - name: Set terraform workspace
         run: |
-          TERRAFORM_WORK_DIR=${{TERRAFORM_WORK_DIR_BASE}}${{steps.set_env.outputs.SPECIFIED_ENV}}
+          TERRAFORM_WORK_DIR=${{env.TERRAFORM_WORK_DIR_BASE}}${{steps.set_env.outputs.SPECIFIED_ENV}}
           echo "TERRAFORM_WORK_DIR=${TERRAFORM_WORK_DIR}"
           echo "TERRAFORM_WORK_DIR=${TERRAFORM_WORK_DIR}" >> "$GITHUB_ENV"
   test:
