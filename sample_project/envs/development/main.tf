@@ -20,10 +20,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "for-vpc-flow-logs
 resource "aws_s3_bucket_public_access_block" "for-vpc-flow-logs" {
   bucket = aws_s3_bucket.for-vpc-flow-logs.id
 
-  block_public_acls   = true
-  block_public_policy = true
+  block_public_acls       = true
+  block_public_policy     = true
   restrict_public_buckets = true
-  ignore_public_acls=true
+  ignore_public_acls      = true
 }
 
 
