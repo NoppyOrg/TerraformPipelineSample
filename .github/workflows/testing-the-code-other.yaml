@@ -2,10 +2,12 @@ name: Testing the code(other branches)
 on:
   pull_request:
     branches-ignore:
+      - development
       - staging
       - production
   push:
     branches-ignore:
+      - development
       - staging
       - production
 env:
