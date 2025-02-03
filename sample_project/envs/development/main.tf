@@ -1,5 +1,5 @@
 
-
+/*
 module "vpc-3az" {
   source = "../../modules/vpc"
 
@@ -13,6 +13,7 @@ module "vpc-3az" {
 
   vpcflowlogsbucket = "arn:aws:s3:::nobuyuf-tforg-test01-vpcflowlogs"
 }
+*/
 
 // 2AZ構成、インターネット接続あり構成例
 /* 
