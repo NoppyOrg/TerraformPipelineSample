@@ -25,7 +25,7 @@ resource "aws_default_security_group" "default" {
 }
 
 ####################################################
-# DHCP Optoin set
+# DHCP Option set
 ####################################################
 resource "aws_vpc_dhcp_options" "this" {
 

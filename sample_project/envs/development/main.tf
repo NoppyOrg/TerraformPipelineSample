@@ -1,3 +1,8 @@
+resource "aws_s3_bucket" "for-vpc-flow-logs" {
+
+}
+
+
 
 module "vpc-3az" {
   source = "../../modules/vpc"
@@ -10,7 +15,7 @@ module "vpc-3az" {
   create_nagtw                   = true
   sg_ec2_ssh_ingress_source_cidr = "27.0.0.0/8"
 
-  vpcflowlogsbucket = "arn:aws:s3:::nobuyuf-tforg-test01-vpcflowlogs"
+  vpcflowlogsbucket = aws_s3_bucket.for-vpc-flow-logs.arn
 }
 
 // 2AZ構成、インターネット接続あり構成例
