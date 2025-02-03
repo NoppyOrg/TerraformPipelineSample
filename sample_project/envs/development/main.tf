@@ -3,6 +3,8 @@ resource "aws_s3_bucket" "for-vpc-flow-logs" {
   #checkov:skip=CKV_AWS_21: This is a test project.
   #checkov:skip=CKV_AWS_18: This is a test project.
   #checkov:skip=CKV_AWS_144; This is a test project.
+  #checkov:skip=CKV2_AWS_61: This is a test project.
+  #checkov:skip=CKV_AWS_145: "This is a test project."
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "for-vpc-flow-logs" {
@@ -20,6 +22,8 @@ resource "aws_s3_bucket_public_access_block" "for-vpc-flow-logs" {
 
   block_public_acls   = true
   block_public_policy = true
+  restrict_public_buckets = true
+  ignore_public_acls=true
 }
 
 
