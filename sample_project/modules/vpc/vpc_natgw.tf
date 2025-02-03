@@ -5,6 +5,7 @@
 ####################################################
 #-- Elastic IP for NAT Gateways
 resource "aws_eip" "natgw1" {
+  #checkov:skip=CKV2_AWS_19:This EIP is used for NAT Gateway.
   count = var.create_igw && var.create_nagtw ? 1 : 0
 
   vpc = true
@@ -14,6 +15,7 @@ resource "aws_eip" "natgw1" {
 }
 
 resource "aws_eip" "natgw2" {
+  #checkov:skip=CKV2_AWS_19:This EIP is used for NAT Gateway.
   count = var.create_igw && var.create_nagtw ? 1 : 0
 
   vpc = true
@@ -23,6 +25,7 @@ resource "aws_eip" "natgw2" {
 }
 
 resource "aws_eip" "natgw3" {
+  #checkov:skip=CKV2_AWS_19:This EIP is used for NAT Gateway.
   count = var.create_igw && var.create_nagtw && var.availability_zone == "3az" ? 1 : 0
 
   vpc = true
