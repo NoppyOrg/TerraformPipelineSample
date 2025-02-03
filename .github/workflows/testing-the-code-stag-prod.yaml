@@ -9,7 +9,7 @@ on:
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR_BASE: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
+  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
   TERRAFORM_VERSION: 1.9.1
   TERRAFORM_ROLE: GitHubAction-Check-Role
   PYTHON_VERSION: 3.12
