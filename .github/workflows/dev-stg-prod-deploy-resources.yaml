@@ -1,4 +1,4 @@
-name: Deploy resources to development, staging, and production environments
+name: Deploy resources to development/staging/production environments
 on:
   push:
     branches:
