@@ -22,10 +22,11 @@ jobs:
           SPECIFIED_ENV=${{ ( github.ref_name == 'staging' || github.ref_name == 'production' ) && github.ref_name || 'development' }}
           echo "ref_name=${{ github.ref_name }}"
           echo "SPECIFIED_ENV=${SPECIFIED_ENV}"
+          echo "SPECIFIED_ENV=${SPECIFIED_ENV}" >> "$GITHUB_ENV"
           echo "SPECIFIED_ENV=${SPECIFIED_ENV}" >> "$GITHUB_OUTPUT"
       - name: Set terraform workspace
         run: |
-          TERRAFORM_WORK_DIR=${{env.TERRAFORM_WORK_DIR_BASE}}${{needs.set_env.outputs.SPECIFIED_ENV}}
+          TERRAFORM_WORK_DIR=${{env.TERRAFORM_WORK_DIR_BASE}}${{env.SPECIFIED_ENV}}
           echo "TERRAFORM_WORK_DIR=${TERRAFORM_WORK_DIR}"
           echo "TERRAFORM_WORK_DIR=${TERRAFORM_WORK_DIR}" >> "$GITHUB_ENV"
   test:
@@ -39,6 +40,10 @@ jobs:
     environment:
       name: ${{needs.set_env.outputs.SPECIFIED_ENV}}
     steps:
+      - name: test
+        run: |
+          echo "SPECIFIED_ENV=${{needs.set_env.outputs.SPECIFIED_ENV}}"
+          echo "TERRAFORM_WORK_DIR=${{needs.set_env.outputs.TERRAFORM_WORK_DIR}}"
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
