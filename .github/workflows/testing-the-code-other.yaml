@@ -23,7 +23,8 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment: development
+    environment:
+      name: development
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
