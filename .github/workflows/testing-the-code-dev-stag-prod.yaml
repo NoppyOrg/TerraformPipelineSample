@@ -1,4 +1,4 @@
-name: Testing the code(staging and production)
+name: Testing the code(development, staging and production)
 on:
   pull_request:
     branches:
