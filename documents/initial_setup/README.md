@@ -153,7 +153,19 @@ aws --profile ${PROFILE[$branch]} cloudformation update-termination-protection \
 ```
 
 ## GitHub 設定
-#### (GUI操作)GitHubリポジトリに各環境のenvironmentを準備する
+### (GUI操作)環境用ブランチの作成
+環境用の以下の３つのブランチを、`main`ブランチから作成する
+
+<作成するブランチ>
+- `development`
+- `staging`
+- `production`
+
+<作成方法>
+- 該当レポジトリの`Code`で`Branches`に移動する
+- 右上の緑色のボタン`New Branch`を押し、`main`ブランチから３つのブランチを作成する。
+
+### (GUI操作)GitHubリポジトリに各環境のenvironmentを準備する
 <作成する環境>
 - 作成するEnvironment一覧
   - <code>development</code>
@@ -167,7 +179,7 @@ aws --profile ${PROFILE[$branch]} cloudformation update-termination-protection \
 1. <code>New environment</code>ボタンを押す
 1. <code>Name</code>に上記で示したそれぞれの環境名を入力して、<code>Configure environment</code>ボタンを実行して環境を作成する
 
-#### (CLI操作)GitHubリポジトリに各環境のenvironmentを準備する
+### (CLI操作)GitHubリポジトリに各環境のenvironmentを準備する
 
 - GitHubへのログイン
 ```sh
@@ -267,9 +279,19 @@ git add .
 git commit -m 'modify backend'
 ```
 
-## GitHub Actions での Terraform による環境のデプロイテスト
-
+## GitHub Actionsテスト
+### 任意ブランチでのテスト用ワークフローの動作確認
+以下のコマンドでupstreamにブランチをプッシュし、テスト用のworkflowが動作し成功することを確認する。
 ```shell
 git branch
  git push --set-upstream origin future-modify-backend
 ```
+
+### pull requestによるテストとデプロイ動作の確認
+
+1. `future-modify-backend`から`main`ブランチへのpull requestテスト
+  1. pull requestを作成し、テストワークフローが成長完了することを確認する
+  1. テストワークフローが完了したらマージを行い、正常終了することを確認する。
+1. `main`ブランチ -> `development`ブランチへのpull requestによるテストとデプロイを確認する
+1. `development`ブランチ -> `staging`ブランチへのpull requestによるテストとデプロイを確認する
+1. `staging`ブランチ -> `production`ブランチへのpull requestによるテストとデプロイを確認する
