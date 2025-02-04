@@ -1,0 +1,67 @@
+name: Testing the code(other branches)
+on:
+  pull_request:
+    branches-ignore:
+      - development
+      - staging
+      - production
+  push:
+    branches-ignore:
+      - development
+      - staging
+      - production
+env:
+  TERRAFORM_WORK_DIR_BASE: sample_project/envs
+  TERRAFORM_VERSION: 1.9.1
+  TERRAFORM_ROLE: GitHubAction-Check-Role
+  PYTHON_VERSION: 3.12
+  AWS_REGION: ap-northeast-1
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        environment: [development, staging, production]
+    environment:
+      name: ${{ matrix.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_ROLE}}
+          role-session-name: github-actions
+          aws-region: ${{env.AWS_REGION}}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          quiet: true
+          skip_check: LOW
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{env.TERRAFORM_VERSION}}
+      - name: Terraform Format
+        run: terraform fmt -recursive -check=true
+      - name: Terraform Init
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} init
+      - name: Terraform Validate
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} validate -no-color
+      - name: Terraform Plan
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} plan

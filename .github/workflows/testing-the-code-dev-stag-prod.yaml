@@ -1,14 +1,15 @@
-name: Dev-Stg-Prod-Push-Test-And-Deploy-Resources
+name: Testing the code(development, staging and production)
 on:
-  push:
-    branches-ignore:
+  pull_request:
+    branches:
       - development
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.ref_name }}/ # This is the path to the Terraform configuration files
+  TERRAFORM_WORK_DIR: sample_project/envs/${{ github.base_ref }}/ # This is the path to the Terraform configuration files
   TERRAFORM_VERSION: 1.9.1
-  TERRAFORM_CHECK_ROLE: GitHubAction-Check-Role
+  TERRAFORM_ROLE: GitHubAction-Check-Role
+  PYTHON_VERSION: 3.12
   AWS_REGION: ap-northeast-1
 jobs:
   test:
@@ -19,7 +20,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    environment: ${{github.ref_name}}
+    environment: ${{github.base_ref}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -28,13 +29,13 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_DEPLOY_ROLE}}
+          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_ROLE}}
           role-session-name: github-actions
           aws-region: ${{env.AWS_REGION}}
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12
+          python-version: ${{env.PYTHON_VERSION}}
       - name: Test with Checkov
         id: checkov
         uses: bridgecrewio/checkov-action@master
@@ -50,8 +51,8 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -recursive -check=true
       - name: Terraform Init
-        run: terraform -chdir=${TERRAFORM_WORK_DIR} init
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} init
       - name: Terraform Validate
-        run: terraform -chdir=${TERRAFORM_WORK_DIR} validate -no-color
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} validate -no-color
       - name: Terraform Plan
-        run: terraform -chdir=${TERRAFORM_WORK_DIR} plan
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} plan

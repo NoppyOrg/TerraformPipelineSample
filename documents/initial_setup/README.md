@@ -59,7 +59,7 @@ setopt interactivecomments
 ```shell
 typeset -A PROFILE=()
 PROFILE[development]="<dev環境のAWS CLIプロファイル>"
-PROFILE[stage]="<stage環境のAWS CLIプロファイル>"
+PROFILE[staging]="<staging環境のAWS CLIプロファイル>"
 PROFILE[production]="<production環境のAWS CLIプロファイル>"
 ```
 
@@ -93,7 +93,7 @@ branch=development
 ```
 - ステージング環境の場合
 ```shell
-branch=stage
+branch=staging
 ```
 - 本番環境の場合
 ```shell
@@ -128,7 +128,7 @@ CloudFormation を利用し、GitHub Actions からの AWS アクセスおよび
 - パラメータ:
   - `GitHubOrganizationsName` : 本リポジトリの所有者を設定。所有者が組織の場合は GitHub Organization 名を指定。所有者が個別アカウントの場合は、アカウン名を設定する。
   - `GitHubRepositoryName` : リポジトリ名。このサンプルではこのリポジトリの名前(`TerraformPipelineSample`)をデフォルトで設定している。
-  - `BranchName` : 該当環境用のGitHub Action実行時のブランチ名。このテンプレートでは、`development`, `stage`, `production`から選択できるようにしている。環境に合わせて適時テンプレートを変更すること。
+  - `BranchName` : 該当環境用のGitHub Action実行時のブランチ名。このテンプレートでは、`development`, `staging`, `production`から選択できるようにしている。環境に合わせて適時テンプレートを変更すること。
   - `OidcProvider`: 作成した OIDC プロバイダーの ARN の指定
 
 <注意事項>
@@ -157,7 +157,7 @@ aws --profile ${PROFILE[$branch]} cloudformation update-termination-protection \
 <作成する環境>
 - 作成するEnvironment一覧
   - <code>development</code>
-  - <code>stage</code>
+  - <code>staging</code>
   - <code>production</code>
 
 <手順>
@@ -191,7 +191,7 @@ Terraform のバックエンドで利用する S3 バケットを、CloudFormati
 
 - 対象ファイル: 
   - development環境: `sample_project/envs/development/backend.tf`
-  - stage環境: `sample_project/envs/stage/backend.tf`
+  - staging環境: `sample_project/envs/staging/backend.tf`
   - production環境: `sample_project/envs/production/backend.tf`
 
 環境に応じて以下の通り守成します。
