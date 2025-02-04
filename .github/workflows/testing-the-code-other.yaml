@@ -11,7 +11,7 @@ on:
       - staging
       - production
 env:
-  TERRAFORM_WORK_DIR: sample_project/envs/development
+  TERRAFORM_WORK_DIR_BASE: sample_project/envs
   TERRAFORM_VERSION: 1.9.1
   TERRAFORM_ROLE: GitHubAction-Check-Role
   PYTHON_VERSION: 3.12
@@ -25,8 +25,11 @@ jobs:
     defaults:
       run:
         shell: bash
+    strategy:
+      matrix:
+        environment: [development, staging, production]
     environment:
-      name: development
+      name: ${{ matrix.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -57,8 +60,8 @@ jobs:
       - name: Terraform Format
         run: terraform fmt -recursive -check=true
       - name: Terraform Init
-        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} init
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} init
       - name: Terraform Validate
-        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} validate -no-color
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} validate -no-color
       - name: Terraform Plan
-        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR}} plan
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} plan
