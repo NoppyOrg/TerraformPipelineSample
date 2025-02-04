@@ -25,8 +25,11 @@ jobs:
     defaults:
       run:
         shell: bash
+    strategy:
+      matrix:
+        environment: [development, staging, production]
     environment:
-      name: development
+      name: ${{ matrix.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
