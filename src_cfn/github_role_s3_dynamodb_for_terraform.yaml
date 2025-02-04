@@ -16,7 +16,7 @@ Parameters:
     Type: String
     AllowedValues:
       - "development"
-      - "stage"
+      - "staging"
       - "production"
   OidcProvider:
     Type: String
