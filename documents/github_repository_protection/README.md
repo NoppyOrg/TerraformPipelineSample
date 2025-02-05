@@ -2,6 +2,46 @@
 
 大規模な開発プロジェクトでは、レポジトリの保護が重要です。以下は、GitHubでレポジトリを保護するための手順です。
 
+
+## 1. ユーザーやチームの権限設定
+
+### (GUI)ユーザーやチームの権限設定方法
+設定はブラウザからのGUI設定になります。(ghコマンドは見た限りだと機能がなさそう)
+手順は以下の通りになります。
+- `Settings` -> `Collaborators and teams`に移動
+- `Manage access`で、設定したいユーザーまたはチームを指定して、適切なロールを選択し設定
+
+### ロールの指定
+ユーザーやチームへの権限付与は、Organizationを利用している場合は、規定のリポジトリロールを利用するのが簡単で良いと思います。
+ロールは権限が強い順に、`Admin`, `Maintain`, `Write`, `Triage`, `Read`の5つのロールがあります。
+- [Organizationのリポジトリロール](https://docs.github.com/ja/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#repository-roles-for-organizations)
+
+<参考>
+私見ですが、5〜10名規模の開発チームでのプロジェクトで、あまりガチガチに役割を分離せず柔軟に運用するけど、締めるところは締めるという場合は、以下の感じかと妄想しています。
+
+| ロール | 割り当て先 | ざっくりした役割 |
+| ----- | -------- | -------------- |
+| `Admin`|そのプロジェクトの責任者&副責任者|レポジトリのSettingでの設定変更|
+| `Write`|チームメンバー|開発全般&PullReqの承認も含む|
+| `Read`|チーム以外のオブザーバー|監査やレビューなど|
+
+## 2. (オプション)Code scanning(CodeQL)の有効化
+[CodeQL](https://docs.github.com/ja/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql)は、GitHub が開発したセキュリティチェックを自動化するためのコード分析エンジンです。
+CodeQL を使用してコードを分析し、結果を code scanning アラートとして表示することができます。
+パブリックポリシーのリポジトリか、[GitHub Advanced Security ](https://docs.github.com/ja/get-started/learning-about-github/about-github-advanced-security)を有効化したGitHub Enterprise CloudのOrganizationに所属するリポジトリに限ります。
+
+ただし、今回のTerraformのHLCコードはスキャン対象コードでないので、有効化してもあまり効果はないかもです。
+GitHub Actionのセキュリティチェックはしてくれるので、使いたい場合は使うという感じで良いかと思います。
+
+### (GUI)Code scanning(CodeQL)の有効化 手順
+設定手順は、[こちらのドキュメント](https://docs.github.com/ja/code-security/code-scanning/enabling-code-scanning/configuring-default-setup-for-code-scanning)を参照。
+
+<簡易手順>
+1. 該当リポジトリで`Setting`タブに移動
+1. 左のサイドバーの`Security`セクションから、`Code security`に入る
+1. `Code scanning`セックションで`Set up`を選び`Default`を選択
+1. `Enable CodeQL`の緑ボタンを押して有効化
+
 ## 1. ブランチ保護ルールの設定
 1. レポジトリの設定ページに移動します。
 2. 「Branches」タブを選択します。
