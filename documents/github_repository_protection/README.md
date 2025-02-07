@@ -17,13 +17,39 @@
 - [Organizationのリポジトリロール](https://docs.github.com/ja/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#repository-roles-for-organizations)
 
 <参考>
-私見ですが、5名前後の小規模の開発チームでのプロジェクトで、あまりガチガチに役割を分離せず柔軟に運用するけど、締めるところは締めるという場合は、以下の感じかと妄想しています。
+私見ですが、5-10名前後の小規模の開発チームでのプロジェクトで、あまりガチガチに役割を分離せず柔軟に運用するけど、締めるところは締めるという場合は、以下の感じかと妄想しています。
 
 | ロール | 割り当て先 | ざっくりした役割 |
 | ----- | -------- | -------------- |
-| `Admin`|そのプロジェクトの責任者&副責任者|レポジトリのSettingでの設定変更|
-| `Write`|チームメンバー|開発全般&PullReqの承認も含む|
-| `Read`|チーム以外のオブザーバー|監査やレビューなど|
+| `Admin`|そのプロジェクトの責任者&副責任者|レポジトリのSettingでの設定変更。普段は使わない。|
+|`Maintain`|チームコアメンバー|mainリポジトリへのマージ、および`development`, `staging`, `production`へのマージ(=各環境へのリリース)は、コアメンバーに限定する(*1)|
+| `Write`|チームメンバー|開発全般|
+- (*1)プロジェクトの特性や状況に応じて、`production`のみ制限などのバリエーションは考えられる。
+
+
+ただ上記の場合、機密情報を扱うシステムやビジネスに直結する基幹業務など、開発環境と本番環境の分離が重視されるセキュアなシステムでは、本番・開発の権限分離が不十分なので追加の検討が必要になると思います。具体的には、`production`とそれ以外の分離が必要になります。
+
+以下に、本番・開発分離の案を考えたものを挙げます。
+
+- 本番・開発の分離案
+  - 案1: `production`ブランチのマージは`Admin`ロールに限定する
+    - 本番リリースは`Admin`ロールとし、`Maintain`ロールは`staging`ブランチまでにし、権限分離で本番・開発の分離とする案。
+    - Pros: 一番リーズナブルかなとは思う。
+    - Cons: 
+      - 責任者の負担: 責任者が必ずリリースする必要があるため、管理者の負担が高まるや管理者不在の時のリリースができない、管理者が技術に疎いと運用が難しい可能性がある。
+      - `Admin`に対する抑制ができない: `Admin`ロールは、任意に`production`ブランチの操作ができてしまう。
+      - レポジトリ&NW的な分離ができない: レポジトリは全体で一つになる。またGitHub操作元のクライアントのIP制限はOrganization単位となるため、本番と開発環境で作業環境の分離が、運用ベースに委ねられる。
+  - 案2: 本番(`production`)はレポジトリを分離する
+    - 本番用にレポジトリを分離し、本番レポジトリから開発用レポジトリの`staging`ブランチの内容を取り込み本番デプロイする。(例えば本番レポジトリのGitHub Actionで開発レポジトリの`staging`ブランチの内容をcloneしてマージするとか)。さらに、本番レポジトリの一連の作業を完全自動化して手動作業を排除することでセキュリティは高められる。
+    - Pros: 本番・開発の分離が十分できる
+    - Cons: 
+      - 実装の難易度: 複雑で作り込みが大変。特に本番リポジトリでの`staging`コード取り込みと、一連の作業の完全自動化の実装
+      - GitHub Organizationレベルでの分離: GitHub Organizationレベルでは単一となる。
+  - 案3(案2'): 案2に加えて、GitHub Organizationレベルから本番・開発で分離する
+    - GitHub Organizationレベルで本番・開発を分離。本番用のGitHub Organizationでは、IP許可を本番アクセス環境からのIPに限定する。
+    - Pros: 最もセキュア
+    - Cons: Organizationレベルとなると、単一のブロジェクトでは難しく、組織全体での取り組みが必要となる
+
 
 ## 2. (オプション)Code scanning(CodeQL)の有効化
 [CodeQL](https://docs.github.com/ja/code-security/code-scanning/introduction-to-code-scanning/about-code-scanning-with-codeql)は、GitHub が開発したセキュリティチェックを自動化するためのコード分析エンジンです。
@@ -43,14 +69,22 @@ GitHub Actionのセキュリティチェックはしてくれるので、使い�
 1. `Enable CodeQL`の緑ボタンを押して有効化
 
 ## 3. ブランチ保護ルールの設定
-### a. ブランチルールセット
-#### i. ブランチルールの概要
+### a. ブランチルールの概要
 ブランチに対して、ブランチの削除禁止や直接のpush禁止(必ずpull request経由でマージする)などのルールを設定することで、開発者がオペレーションミスなどでブランチを壊さないように保護します。
 
-対象ブランチは、gitlab-flowのブランチ戦略の場合、少なくとも開発のメインブランチとなる`main`と、各環境用のブランチ(`development`, `staging`, `production`)は、ルールセットでブランチ保護するのが良いと思います。
+### b. ブランチ保護ルールの種類
+GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`branch ruleset`の二種類があります。
+
+今回は、GitHubからのアナウンスはありませんが、ゆくゆくはclassicからrulesetに移行するのかと妄想し、(2)`branch ruleset`を採用することとします。
+
+### c. ブランチルールセットの設定
+#### i.はじめに
+保護の対象ブランチは、gitlab-flowのブランチ戦略の場合、少なくとも開発のメインブランチとなる`main`と、各環境用のブランチ(`development`, `staging`, `production`)になり、これらのブランチをルールセットで保護することになります。
 
 ブランチルールセットの詳細は以下のドキュメントを参照してください。
 - [GitHubドキュメント:ブランチ保護ルールについて](https://docs.github.com/ja/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#about-branch-protection-rules)
+
+またこちらのbranch rulesetの設定は、[こちらのブログ](https://zenn.dev/kuritify/articles/github-rulesets)の内容を参考にさせていただきました。
 
 #### ii.ブランチルールセットの設定単位
 結論から言うと、設定内容が重複してしまいますが、**ブランチ毎にブランチルールセットを設定するのが良さそう**です。
@@ -60,6 +94,14 @@ GitHub Actionのセキュリティチェックはしてくれるので、使い�
 なお、ルールセットの設定ではexport/importが使えるので(2025.2月時点では、Previewですが)、一回作ったルールセットをexportしてそれをimportして複製することで、複数のブランチにミスなくルールセットが設定できます。
 
 #### iii.設定するルール
+
+
+
+
+
+
+
+
 本当は運用を考えてしっかりルール決めた方が良いと思いますが、とりあえずこんな感じで作ってみました。
 <table>
 <tr><th>ルール</th><th>サブルール</th><th>ルールの説明</th></tr>
@@ -82,9 +124,16 @@ GitHub Actionのセキュリティチェックはしてくれるので、使い�
 - [Blog:Branch protectionsでできること](https://zenn.dev/dzeyelid/articles/ba5b17765efd8d#branch-protections%E3%81%A7%E3%81%A7%E3%81%8D%E3%82%8B%E3%81%93%E3%81%A8) : ルールセットが一覧表で整理されていてみやすいです。
 
 
+
+
+
+
 #### iiii.ルールセットの設定方法
 
-xxxx
++ レポジトリで`Settings`タブに入り、サイドバーから`Rule`->`Ruleset`を選択
++ 右上の緑ボタン`New Ruleset`から新しいルールを作成する
+  + 新規に作成したい場合はプルダウンから`New branch ruleset`を選択
+  + 既存のjson設定ファイルをimportする場合は`import a ruleset`を選択
 
 
 ### b. ファイルパスルール
