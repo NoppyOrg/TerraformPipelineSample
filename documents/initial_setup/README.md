@@ -140,7 +140,7 @@ CloudFormationのテンプレートをデプロイします。
 ```shell
 aws --profile ${PROFILE[$branch]} cloudformation deploy \
     --stack-name "github-action-and-terraform-resources" \
-    --template-file "./src_cfn/github_role_s3_dynamodb_for_terraform.yaml" \
+    --template-file "./src/cfn/github_role_s3_dynamodb_for_terraform.yaml" \
     --parameter-overrides OidcProvider="${OIDC_PROVIDER_ARN}" BranchName="$branch" \
     --capabilities CAPABILITY_NAMED_IAM ;
 ```

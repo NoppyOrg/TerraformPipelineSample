@@ -17,7 +17,7 @@
 - [Organizationのリポジトリロール](https://docs.github.com/ja/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization#repository-roles-for-organizations)
 
 <参考>
-私見ですが、5〜10名規模の開発チームでのプロジェクトで、あまりガチガチに役割を分離せず柔軟に運用するけど、締めるところは締めるという場合は、以下の感じかと妄想しています。
+私見ですが、5名前後の小規模の開発チームでのプロジェクトで、あまりガチガチに役割を分離せず柔軟に運用するけど、締めるところは締めるという場合は、以下の感じかと妄想しています。
 
 | ロール | 割り当て先 | ざっくりした役割 |
 | ----- | -------- | -------------- |
@@ -60,23 +60,34 @@ GitHub Actionのセキュリティチェックはしてくれるので、使い�
 なお、ルールセットの設定ではexport/importが使えるので(2025.2月時点では、Previewですが)、一回作ったルールセットをexportしてそれをimportして複製することで、複数のブランチにミスなくルールセットが設定できます。
 
 #### iii.設定するルール
+本当は運用を考えてしっかりルール決めた方が良いと思いますが、とりあえずこんな感じで作ってみました。
+<table>
+<tr><th>ルール</th><th>サブルール</th><th>ルールの説明</th></tr>
+<tr><td colspan=2><b>restrict deletions</b></td><td>ブランチの削除を制限(ルールセット作成時にデフォルトでON)</td>
+<tr><td colspan=2><b>Require a pull request before merging</b></td><td>ージの際にPull Requestを要求する(結果として、直接のPushができなくなる)</td>
+ <tr><td></td><td><b>Required approvals</b></td><td>Pull requestのマージの際、設定した人数以上の承認が必要になる。５名前後の体制なら、一人か多くて二人か？</td></tr>
+ <tr><td></td><td><b>Dismiss stale pull request approvals when new commits are pushed</td><td>承認後に元のブランチで新しいpushがあった場合は、既存の承認は無効化する</td></tr>
+ <tr><td></td><td><b>Request pull request review from Copilot</td><td>Pull requestでCopilotのレビューを要求する</td></tr>
+<tr><td colspan=2><b>Require status checks to pass</b><td>指定したStatus Checkをパスしていることを要求する</td></tr>
+ <tr><td></td><td><b>Require branches to be up to date before merging</b></td><td>マージする前に、作業ブランチが最新であることを要求</td></tr>
+ <tr><td></td><td><b>Status checks that are required</b></td><td>パスを必須とするチェックを指定する</td></tr>
+<tr><td colspan=2><b>Block force pushes</b><td>force pushを禁止する（デフォルトで有効）</td></tr>
+<tr><td colspan=2><b>Require code scanning results</td><td>指定したコードチェック(ここではCodeQL)に通過することを必須とする</td></tr>
+</table>
+
+
+<参考>
+- [GitHubドキュメント:ルールセットで使用できるルール](https://docs.github.com/ja/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
+
+- [Blog:Branch protectionsでできること](https://zenn.dev/dzeyelid/articles/ba5b17765efd8d#branch-protections%E3%81%A7%E3%81%A7%E3%81%8D%E3%82%8B%E3%81%93%E3%81%A8) : ルールセットが一覧表で整理されていてみやすいです。
 
 
 #### iiii.ルールセットの設定方法
 
+xxxx
 
 
-
-1. レポジトリの設定ページに移動します。
-2. 「Branches」タブを選択します。
-3. 「Add rule」をクリックし、保護したいブランチ名を指定します。
-4. 必要な保護オプションを選択します（例：プルリクエストのレビューが必要、CIの成功が必要など）。
-
-
-
-
-
-
+### b. ファイルパスルール
 
 ## 2. コードオーナーの設定
 1. レポジトリのルートに `CODEOWNERS` ファイルを作成します。
