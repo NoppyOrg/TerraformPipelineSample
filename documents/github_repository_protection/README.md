@@ -158,6 +158,7 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
   + 既存のjson設定ファイルをimportする場合は`import a ruleset`を選択
 
 
+
 ### b. ファイルパスルール
 
 ## 2. コードオーナーの設定
