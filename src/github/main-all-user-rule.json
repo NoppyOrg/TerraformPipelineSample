@@ -1,6 +1,6 @@
 {
-  "id": 3561262,
-  "name": "development",
+  "id": 3597514,
+  "name": "main-all-user-rule",
   "target": "branch",
   "source_type": "Repository",
   "source": "NoppyOrg/TerraformPipelineSample",
@@ -9,7 +9,7 @@
     "ref_name": {
       "exclude": [],
       "include": [
-        "refs/heads/development"
+        "refs/heads/main"
       ]
     }
   },
@@ -38,8 +38,8 @@
         "required_approving_review_count": 1,
         "dismiss_stale_reviews_on_push": true,
         "require_code_owner_review": false,
-        "require_last_push_approval": false,
-        "required_review_thread_resolution": false,
+        "require_last_push_approval": true,
+        "required_review_thread_resolution": true,
         "automatic_copilot_code_review_enabled": true,
         "allowed_merge_methods": [
           "merge",
@@ -55,7 +55,15 @@
         "do_not_enforce_on_create": false,
         "required_status_checks": [
           {
-            "context": "test (development)",
+            "context": "Code Test (development)",
+            "integration_id": 15368
+          },
+          {
+            "context": "Code Test (production)",
+            "integration_id": 15368
+          },
+          {
+            "context": "Code Test (staging)",
             "integration_id": 15368
           }
         ]
