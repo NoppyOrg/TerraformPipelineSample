@@ -12,12 +12,13 @@ on:
       - production
 env:
   TERRAFORM_WORK_DIR_BASE: sample_project/envs
-  TERRAFORM_VERSION: 1.9.1
+  TERRAFORM_VERSION: 1.9.8
   TERRAFORM_ROLE: GitHubAction-Check-Role
   PYTHON_VERSION: 3.12
   AWS_REGION: ap-northeast-1
 jobs:
-  test:
+  CodeTest:
+    name: Code Test
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -32,11 +33,11 @@ jobs:
       name: ${{ matrix.environment }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_ROLE}}
           role-session-name: github-actions
@@ -54,7 +55,7 @@ jobs:
           quiet: true
           skip_check: LOW
       - name: Setup terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{env.TERRAFORM_VERSION}}
       - name: Terraform Format
