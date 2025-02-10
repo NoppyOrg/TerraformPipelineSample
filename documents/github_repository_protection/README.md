@@ -93,42 +93,64 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
 
 なお、ルールセットの設定ではexport/importが使えるので(2025.2月時点では、Previewですが)、一回作ったルールセットをexportしてそれをimportして複製することで、複数のブランチにミスなくルールセットが設定できます。
 
-#### iii.設定するルール
+#### iii.保護をするブランチ
+以下のブランチに対してルールセットを設定して、ブランチを保護します。
+- `main` : 開発のメインブランチ
+- `development` : 開発環境へのデプロイ用ブランチ
+- `staging` : ステージング環境へのデプロイ用ブランチ
+- `production` : 本番環境へのデプロイ用ブランチ
+
+#### iv.設定するルール
+
+[こちらのブログ](https://zenn.dev/kuritify/articles/github-rulesets)の内容に倣い、各ブランチに対して以下の２つのルールセットを適用します。
+
+- `<branch名>-all-user-rule` : ブランチ削除禁止、pull requestの必須化など全ユーザーに適用するルールを設定します。
+- `<branch名>-maintainer-user-rule` : bypassで設定したユーザーのみブランチ更新を許可します(許可したい人をbypassに指定して、Restrict updatesのみ有効化する)
 
 
+##### `<branch名>-all-user-rule`の設定内容
 
-
-
-
-
-
-本当は運用を考えてしっかりルール決めた方が良いと思いますが、とりあえずこんな感じで作ってみました。
 <table>
 <tr><th>ルール</th><th>サブルール</th><th>ルールの説明</th></tr>
 <tr><td colspan=2><b>restrict deletions</b></td><td>ブランチの削除を制限(ルールセット作成時にデフォルトでON)</td>
 <tr><td colspan=2><b>Require a pull request before merging</b></td><td>ージの際にPull Requestを要求する(結果として、直接のPushができなくなる)</td>
- <tr><td></td><td><b>Required approvals</b></td><td>Pull requestのマージの際、設定した人数以上の承認が必要になる。５名前後の体制なら、一人か多くて二人か？</td></tr>
+ <tr><td></td><td><b>Required approvals</b></td><td>Pull requestのマージの際、設定した人数以上の承認が必要になる。５-名前後の体制なら、一人か多くて二人、10名レベルになれば２名という感じか？</td></tr>
  <tr><td></td><td><b>Dismiss stale pull request approvals when new commits are pushed</td><td>承認後に元のブランチで新しいpushがあった場合は、既存の承認は無効化する</td></tr>
+<tr><td></td><td><b>Require approval of the most recent reviewable push</b></td><td> 最新のレビュー対象のPushに対して、Pushした人と異なる人が承認する必要がある</td></tr>
+ <tr><td></td><td><b>RRequire conversation resolution before merging</b><td>全てのconversationが解決済みである必要がある</td></tr>
  <tr><td></td><td><b>Request pull request review from Copilot</td><td>Pull requestでCopilotのレビューを要求する</td></tr>
 <tr><td colspan=2><b>Require status checks to pass</b><td>指定したStatus Checkをパスしていることを要求する</td></tr>
  <tr><td></td><td><b>Require branches to be up to date before merging</b></td><td>マージする前に、作業ブランチが最新であることを要求</td></tr>
- <tr><td></td><td><b>Status checks that are required</b></td><td>パスを必須とするチェックを指定する</td></tr>
+ <tr><td></td><td><b>Status checks that are required</b></td><td>パスを必須とするチェックを指定する。GitHub Actionで設定したCode Testでは
+ 開発・ステージング・本番環境の3つの環境のチェックを並列で行い、全てのチェックがパスすることをテスト結果の期待値としています。そのため、この項目ではブランチによらず、以下の３つのチェックを登録します
+<ul>
+<li>Code Test (development)</li>
+<li>Code Test (Staging)</li>
+<li>Code Test (production)</li>
+</ul>
+</td></tr>
 <tr><td colspan=2><b>Block force pushes</b><td>force pushを禁止する（デフォルトで有効）</td></tr>
 <tr><td colspan=2><b>Require code scanning results</td><td>指定したコードチェック(ここではCodeQL)に通過することを必須とする</td></tr>
 </table>
 
+##### `<branch名>-maintainer-user-rule`の設定内容
 
-<参考>
+- Bypass list
+  - マージを許可するユーザーまたはチームを登録する
+- ルール
+
+<table>
+<tr><th>ルール</th><th>サブルール</th><th>ルールの説明</th></tr>
+<tr><td colspan=2><b>Restrict updates</b></td><td>Bypass listに設定したユーザーやチーム以外の人のブランチの更新を制限する</td>
+</table>
+
+##### <参考>
+- [うん。これで事故るならしょうがない。GitHub ルールセットでGitの操作ミスと無縁になる](https://zenn.dev/kuritify/articles/github-rulesets)
 - [GitHubドキュメント:ルールセットで使用できるルール](https://docs.github.com/ja/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets)
 
 - [Blog:Branch protectionsでできること](https://zenn.dev/dzeyelid/articles/ba5b17765efd8d#branch-protections%E3%81%A7%E3%81%A7%E3%81%8D%E3%82%8B%E3%81%93%E3%81%A8) : ルールセットが一覧表で整理されていてみやすいです。
 
-
-
-
-
-
-#### iiii.ルールセットの設定方法
+#### v.ルールセットの設定方法
 
 + レポジトリで`Settings`タブに入り、サイドバーから`Rule`->`Ruleset`を選択
 + 右上の緑ボタン`New Ruleset`から新しいルールを作成する
