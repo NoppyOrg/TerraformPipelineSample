@@ -68,14 +68,38 @@ GitHub Actionのセキュリティチェックはしてくれるので、使い�
 1. `Code scanning`セックションで`Set up`を選び`Default`を選択
 1. `Enable CodeQL`の緑ボタンを押して有効化
 
-## 3. ブランチ保護ルールの設定
+## 3. (オプション)コードオーナーの設定
+コードオーナーの設定を行うと、Pull Request発行時にレビュー依頼が自動で届くようになります。また、次に述べつルールセットでコードオーナーによる承認を強制することができます。
+
+ルールセットで`コードオーナーによる承認を強制する`設定を有効化する場合は、コードオーナーの設定を行います。
+
+<設定方法>
+1. `.github/`ディレクトリに `CODEOWNERS` ファイルを作成します。
+2. ファイルにコードオーナーを指定します(以下に例を示す)。コードオーナーの設定方法は[こちらのドキュメント](https://docs.github.com/ja/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#example-of-a-codeowners-file)を参考にしてください。
+    ```
+    * @team-leads
+    ```
+
+<参考>
+- [コードオーナーについて](https://docs.github.com/ja/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
+
+
+## 4. ブランチ保護ルールの設定
 ### a. ブランチルールの概要
 ブランチに対して、ブランチの削除禁止や直接のpush禁止(必ずpull request経由でマージする)などのルールを設定することで、開発者がオペレーションミスなどでブランチを壊さないように保護します。
 
 ### b. ブランチ保護ルールの種類
-GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`branch ruleset`の二種類があります。
+GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`ruleset`の二種類があります。また(2)`ruleset`については、対象に合わせて、(i)`branch ruleset`, (ii)`tag ruleset`, (iii)
+`push ruleset`の３つのルールセットがあります。
 
-今回は、GitHubからのアナウンスはありませんが、ゆくゆくはclassicからrulesetに移行するのかと妄想し、(2)`branch ruleset`を採用することとします。
+|区分|ルール名|保護対象|GitHub Free|GitHub 有償プラン|
+|---|-------|-------|-------|-------|
+|Classic|classic branch protection rule|branch|利用可(制限あり)|利用可|
+|ruleset|branch ruleset|branch|利用可(制限あり)|利用可|
+||tag ruleset|tag|利用可(制限あり)|利用可|
+||Push ruleset|push|NG|利用可|
+
+ブランチに対する保護について今回は、GitHubからのアナウンスはありませんが、ゆくゆくはclassicからrulesetに移行するのかと妄想し、(2)`branch ruleset`を採用することとします。
 
 ### c. ブランチルールセットの設定
 #### i.はじめに
@@ -116,6 +140,7 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
 <tr><td colspan=2><b>Require a pull request before merging</b></td><td>ージの際にPull Requestを要求する(結果として、直接のPushができなくなる)</td>
  <tr><td></td><td><b>Required approvals</b></td><td>Pull requestのマージの際、設定した人数以上の承認が必要になる。５-名前後の体制なら、一人か多くて二人、10名レベルになれば２名という感じか？</td></tr>
  <tr><td></td><td><b>Dismiss stale pull request approvals when new commits are pushed</td><td>承認後に元のブランチで新しいpushがあった場合は、既存の承認は無効化する</td></tr>
+ <tr><td></td><td><b>Require review from Code Owners</td><td>「(オプション)コードオーナーの設定」を設定した場合は、こちらを有効化する</td></tr>
 <tr><td></td><td><b>Require approval of the most recent reviewable push</b></td><td> 最新のレビュー対象のPushに対して、Pushした人と異なる人が承認する必要がある</td></tr>
  <tr><td></td><td><b>RRequire conversation resolution before merging</b><td>全てのconversationが解決済みである必要がある</td></tr>
  <tr><td></td><td><b>Request pull request review from Copilot</td><td>Pull requestでCopilotのレビューを要求する</td></tr>
@@ -136,7 +161,7 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
 ##### `<branch名>-maintainer-user-rule`の設定内容
 
 - Bypass list
-  - マージを許可するユーザーまたはチームを登録する
+  - マージを許可するユーザー、チーム、またはロールを登録する。サンプルではロールで`Repository Admin`と`Maintain`ロールを指定している。
 - ルール
 
 <table>
@@ -157,33 +182,13 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
   + 新規に作成したい場合はプルダウンから`New branch ruleset`を選択
   + 既存のjson設定ファイルをimportする場合は`import a ruleset`を選択
 
+import用のサンプルJSONを以下のフォルダに入れているので参考にしてください。
+- `src/github`
 
-### b. ファイルパスルール
+5. (有償プランのみ)プッシュルールセットによる特定ファイルパスの保護
 
-## 2. コードオーナーの設定
-1. レポジトリのルートに `CODEOWNERS` ファイルを作成します。
-2. ファイルにコードオーナーを指定します。例：
-    ```
-    * @team-leads
-    ```
-3. コードオーナーは、指定されたファイルやディレクトリに対する変更をレビューする責任があります。
+GitHubの有償プランを利用している場合、`Push ruleset`を利用することができます。プッシュルールセットで、特定のファイルパスへのpushを制限することができます。
+この設定を利用することで、`.github/workflow`や`.ghthub/CODEOWNERS`を保護することができます。
 
-## 3. セキュリティポリシーの設定
-1. レポジトリの設定ページに移動します。
-2. 「Security & analysis」タブを選択します。
-3. 「Enable」ボタンをクリックして、セキュリティ機能を有効にします（例：Dependabot alerts、セキュリティスキャンなど）。
-
-## 4. アクセス権限の管理
-1. レポジトリの設定ページに移動します。
-2. 「Manage access」タブを選択します。
-3. チームや個人に対して適切なアクセス権限を設定します（例：読み取り専用、書き込み可能など）。
-
-## 5. 定期的な監査
-1. レポジトリのアクティビティログを定期的に確認します。
-2. 不審なアクティビティがないか監視します。
-3. 必要に応じてアクセス権限を見直します。
-
-これらの手順を実施することで、GitHubレポジトリのセキュリティを強化し、大規模開発プロジェクトを安全に進めることができます。
-
-
-test2
+詳細は以下のドキュメントを参照ください。
+- [ファイルパスを制限する](https://docs.github.com/ja/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets#restrict-file-paths)
