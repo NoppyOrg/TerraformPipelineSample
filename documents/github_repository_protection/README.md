@@ -136,7 +136,7 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
 ##### `<branch名>-maintainer-user-rule`の設定内容
 
 - Bypass list
-  - マージを許可するユーザーまたはチームを登録する
+  - マージを許可するユーザー、チーム、またはロールを登録する。サンプルではロールで`Repository Admin`と`Maintain`ロールを指定している。
 - ルール
 
 <table>
@@ -157,6 +157,8 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`br
   + 新規に作成したい場合はプルダウンから`New branch ruleset`を選択
   + 既存のjson設定ファイルをimportする場合は`import a ruleset`を選択
 
+import用のサンプルJSONを以下のフォルダに入れているので参考にしてください。
+- `src/github`
 
 
 ### b. ファイルパスルール
