@@ -25,9 +25,9 @@ jobs:
       - id: decide
         name: Decide Environment
         run: |
-          if [ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             target_branch=${{ github.ref_name }}
-          elif [ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then 
+          elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then 
             target_branch=${{ github.base_ref }}
           fi
           echo "event = ${GITHUB_EVENT_NAME}"
