@@ -43,62 +43,62 @@ jobs:
 
           # Set output
           echo "environment=${environment}" >> $GITHUB_OUTPUT
-  TestJob:
-    name: Test Job
-    runs-on: ubuntu-latest
-    needs: DecideTestEnvironment
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - run: echo "${{needs.DecideTestEnvironment.outputs.environment}}"
-  # CodeTest:
-  #   name: Code Test
+  # TestJob:
+  #   name: Test Job
   #   runs-on: ubuntu-latest
   #   needs: DecideTestEnvironment
-  #   permissions:
-  #     id-token: write
-  #     contents: read
   #   defaults:
   #     run:
   #       shell: bash
-  #   strategy:
-  #     matrix:
-  #       environment: ${{fromJson(needs.DecideTestEnvironment.outputs.environment)}} # [production, staging, development]
-  #   environment:
-  #     name: ${{ matrix.environment }}
   #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - name: Configure AWS Credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_ROLE}}
-  #         role-session-name: github-actions
-  #         aws-region: ${{env.AWS_REGION}}
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: ${{env.PYTHON_VERSION}}
-  #     - name: Test with Checkov
-  #       id: checkov
-  #       uses: bridgecrewio/checkov-action@master
-  #       with:
-  #         directory: .
-  #         framework: terraform
-  #         quiet: true
-  #         skip_check: LOW
-  #     - name: Setup terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: ${{env.TERRAFORM_VERSION}}
-  #     - name: Terraform Format
-  #       run: terraform fmt -recursive -check=true
-  #     - name: Terraform Init
-  #       run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} init
-  #     - name: Terraform Validate
-  #       run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} validate -no-color
-  #     - name: Terraform Plan
-  #       run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} plan
+  #     - run: echo "${{needs.DecideTestEnvironment.outputs.environment}}"
+  CodeTest:
+    name: Code Test
+    runs-on: ubuntu-latest
+    needs: DecideTestEnvironment
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.DecideTestEnvironment.outputs.environment) }} # [production, staging, development]
+    environment:
+      name: ${{ matrix.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{secrets.AWS_ACCOUNT_ID}}:role/${{env.TERRAFORM_ROLE}}
+          role-session-name: github-actions
+          aws-region: ${{env.AWS_REGION}}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          quiet: true
+          skip_check: LOW
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{env.TERRAFORM_VERSION}}
+      - name: Terraform Format
+        run: terraform fmt -recursive -check=true
+      - name: Terraform Init
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} init
+      - name: Terraform Validate
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} validate -no-color
+      - name: Terraform Plan
+        run: terraform -chdir=${{env.TERRAFORM_WORK_DIR_BASE}}/${{matrix.environment}} plan
