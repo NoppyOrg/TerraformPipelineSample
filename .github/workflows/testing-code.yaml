@@ -23,20 +23,25 @@ jobs:
       environment: ${{ steps.decide.outputs.environment }}
     steps:
       - id: decide
-        uses: actions/github-script@v7
-        with:
-          script: |
-            console.log(process.env);
-            # const branch = github.context.payload.pull_request.head.ref;
-            # let environment;
-            # if (branch === 'production') {
-            #   environment = '[production]';
-            # } else if (branch === 'staging') {
-            #   environment = '[production, staging]';
-            # } else {
-            #   environment = '[production, staging, development]';
-            # }
-            # console.log(`::set-output name=environment::${environment}`)
+        name: Decide Environment
+        run: |
+          echo "github.ref_name = ${{ github.ref_name }}"
+          echo "github.head_ref = ${{ github.head_ref }}"
+          env
+
+        # with:
+        #   script: |
+        #     console.log(process.env);
+        #     # const branch = github.context.payload.pull_request.head.ref;
+        #     # let environment;
+        #     # if (branch === 'production') {
+        #     #   environment = '[production]';
+        #     # } else if (branch === 'staging') {
+        #     #   environment = '[production, staging]';
+        #     # } else {
+        #     #   environment = '[production, staging, development]';
+        #     # }
+        #     # console.log(`::set-output name=environment::${environment}`)
   # CodeTest:
   #   name: Code Test
   #   runs-on: ubuntu-latest
