@@ -25,32 +25,22 @@ jobs:
       - id: decide
         name: Decide Environment
         run: |
+          # set target branch
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             target_branch=${{ github.ref_name }}
           elif [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then 
             target_branch=${{ github.base_ref }}
           fi
-          echo "event = ${GITHUB_EVENT_NAME}"
-          echo "target_branch = ${target_branch}"
 
-          # echo "github.ref_name = ${{ github.ref_name }}"
-          # echo "github.head_ref = ${{ github.head_ref }}"
-          # echo "github.base_ref = ${{ github.base_ref }}"
-          # echo "GITHUB_EVENT_NAME = ${GITHUB_EVENT_NAME}"
-
-        # with:
-        #   script: |
-        #     console.log(process.env);
-        #     # const branch = github.context.payload.pull_request.head.ref;
-        #     # let environment;
-        #     # if (branch === 'production') {
-        #     #   environment = '[production]';
-        #     # } else if (branch === 'staging') {
-        #     #   environment = '[production, staging]';
-        #     # } else {
-        #     #   environment = '[production, staging, development]';
-        #     # }
-        #     # console.log(`::set-output name=environment::${environment}`)
+          # Decide test Environments
+          if [[ "${target_branch}" == "production" ]]; then
+            environment="[production]"
+          elif [[ "${target_branch}" == "staging" ]]; then
+            environment="[production, staging]"
+          else
+            environment="[production, staging, development]"
+          fi
+          echo "::set-output name=environment::${environment}"
   # CodeTest:
   #   name: Code Test
   #   runs-on: ubuntu-latest
