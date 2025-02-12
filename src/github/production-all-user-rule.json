@@ -1,5 +1,5 @@
 {
-  "id": 3597514,
+  "id": 3632206,
   "name": "production-all-user-rule",
   "target": "branch",
   "source_type": "Repository",
@@ -51,19 +51,11 @@
     {
       "type": "required_status_checks",
       "parameters": {
-        "strict_required_status_checks_policy": true,
-        "do_not_enforce_on_create": false,
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": true,
         "required_status_checks": [
           {
             "context": "Code Test (production)",
-            "integration_id": 15368
-          },
-          {
-            "context": "Code Test (staging)",
-            "integration_id": 15368
-          },
-          {
-            "context": "Code Test (development)",
             "integration_id": 15368
           }
         ]

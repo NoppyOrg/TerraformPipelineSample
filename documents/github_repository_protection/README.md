@@ -145,13 +145,27 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`ru
  <tr><td></td><td><b>RRequire conversation resolution before merging</b><td>全てのconversationが解決済みである必要がある</td></tr>
  <tr><td></td><td><b>Request pull request review from Copilot</td><td>Pull requestでCopilotのレビューを要求する</td></tr>
 <tr><td colspan=2><b>Require status checks to pass</b><td>指定したStatus Checkをパスしていることを要求する</td></tr>
- <tr><td></td><td><b>Require branches to be up to date before merging</b></td><td>マージする前に、作業ブランチが最新であることを要求</td></tr>
  <tr><td></td><td><b>Status checks that are required</b></td><td>パスを必須とするチェックを指定する。GitHub Actionで設定したCode Testでは
- 開発・ステージング・本番環境の3つの環境のチェックを並列で行い、全てのチェックがパスすることをテスト結果の期待値としています。そのため、この項目ではブランチによらず、以下の３つのチェックを登録します
+ 開発・ステージング・本番環境の3つの環境のチェックを並列で行い、全てのチェックがパスすることをテスト結果の期待値としています。この項目ではブランチごとに、チェック対象の環境が変わります。(dev -> staging -> productionの順に適用するため、適用済みの環境を再テストしても意味がないため)
 <ul>
-<li>Code Test (development)</li>
-<li>Code Test (Staging)</li>
-<li>Code Test (production)</li>
+<li>production環境
+  <ul>
+    <li>Code Test (production)</li>
+  </ul>
+</li>
+<li>staging環境
+  <ul>
+    <li>Code Test (production)</li>
+    <li>Code Test (Staging)</li>
+  </ul>
+</li>
+<li>development & main環境
+  <ul>
+    <li>Code Test (production)</li>
+    <li>Code Test (Staging)</li>
+    <li>Code Test (development)</li>
+  </ul>
+</li>
 </ul>
 </td></tr>
 <tr><td colspan=2><b>Block force pushes</b><td>force pushを禁止する（デフォルトで有効）</td></tr>
