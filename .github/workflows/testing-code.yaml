@@ -34,15 +34,15 @@ jobs:
 
           # Decide test Environments
           if [[ "${target_branch}" == "production" ]]; then
-            environment="[production]"
+            environment='["production"]'
           elif [[ "${target_branch}" == "staging" ]]; then
-            environment="[production, staging]"
+            environment='["production", "staging"]'
           else
-            environment="[production, staging, development]"
+            environment='["production", "staging", "development"]'
           fi
 
           # Set output
-          echo "environment=${environment}" >> $GITHUB_OUTPUT
+          echo "environment=$(echo "${environment}" | jq -c)" >> $GITHUB_OUTPUT
   # TestJob:
   #   name: Test Job
   #   runs-on: ubuntu-latest
