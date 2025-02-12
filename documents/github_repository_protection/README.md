@@ -145,7 +145,6 @@ GitHubのブランチ保護は、(1)`classic branch protection rule`と、(2)`ru
  <tr><td></td><td><b>RRequire conversation resolution before merging</b><td>全てのconversationが解決済みである必要がある</td></tr>
  <tr><td></td><td><b>Request pull request review from Copilot</td><td>Pull requestでCopilotのレビューを要求する</td></tr>
 <tr><td colspan=2><b>Require status checks to pass</b><td>指定したStatus Checkをパスしていることを要求する</td></tr>
- <tr><td></td><td><b>Require branches to be up to date before merging</b></td><td><b>mainブランチのみ適用</b><br>マージする前に、作業ブランチが最新であることを要求</td></tr>
  <tr><td></td><td><b>Status checks that are required</b></td><td>パスを必須とするチェックを指定する。GitHub Actionで設定したCode Testでは
  開発・ステージング・本番環境の3つの環境のチェックを並列で行い、全てのチェックがパスすることをテスト結果の期待値としています。この項目ではブランチごとに、チェック対象の環境が変わります。(dev -> staging -> productionの順に適用するため、適用済みの環境を再テストしても意味がないため)
 <ul>
