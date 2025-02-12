@@ -1,11 +1,14 @@
-name: Testing the code
+name: Test the code
 on:
   pull_request:
     branches:
       - "*" # All branches
   push:
-    branches:
-      - "*" # All branches
+    branches-ignore:
+      - main
+      - development
+      - staging
+      - production
 env:
   TERRAFORM_WORK_DIR_BASE: sample_project/envs
   TERRAFORM_VERSION: 1.9.8
