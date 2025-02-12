@@ -1,15 +1,11 @@
-name: Testing the code(other branches)
+name: Testing the code
 on:
   pull_request:
-    branches-ignore:
-      - development
-      - staging
-      - production
+    branches:
+      - "*" # All branches
   push:
-    branches-ignore:
-      - development
-      - staging
-      - production
+    branches:
+      - "*" # All branches
 env:
   TERRAFORM_WORK_DIR_BASE: sample_project/envs
   TERRAFORM_VERSION: 1.9.8
@@ -20,9 +16,6 @@ jobs:
   DecideTestEnvironment:
     name: Decide Test Environment
     runs-on: ubuntu-latest
-    permissions:
-      id-token: read
-      contents: read
     defaults:
       run:
         shell: bash
